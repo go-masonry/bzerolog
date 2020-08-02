@@ -1,4 +1,4 @@
-module github.com/go-masonry/bricks/log/bzerolog
+module github.com/go-masonry/bzerolog
 
 go 1.14
 
