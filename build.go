@@ -31,6 +31,21 @@ const (
 	skipWrapperFrames = 1
 )
 
+// ZerologBuilder is helper builder to configure zerolog instance
+type ZerologBuilder interface {
+	log.Builder
+	// SetWriter set where output should be printed
+	SetWriter(writer io.Writer) ZerologBuilder
+	// AddStaticFields will always add provided fields to every log entry
+	AddStaticFields(fields map[string]interface{}) ZerologBuilder
+	// ExcludeTime configures zerolog to exclude any time field
+	ExcludeTime() ZerologBuilder
+	// SetCustomTimeFormatter sets the time format field, have no effect if ExcludeTime is called
+	SetCustomTimeFormatter(format string) ZerologBuilder
+	// IncludeCaller adds caller:line to log entry
+	IncludeCaller() ZerologBuilder
+}
+
 type zerologConfig struct {
 	writer            io.Writer
 	level             log.Level
@@ -46,13 +61,14 @@ type zerologBuilder struct {
 	ll *list.List
 }
 
-func Builder() log.Builder {
+// Builder creates a new zerolog builder
+func Builder() ZerologBuilder {
 	return &zerologBuilder{
 		ll: list.New(),
 	}
 }
 
-func (zb *zerologBuilder) SetWriter(writer io.Writer) log.Builder {
+func (zb *zerologBuilder) SetWriter(writer io.Writer) ZerologBuilder {
 	zb.ll.PushBack(func(cfg *zerologConfig) {
 		cfg.writer = writer
 	})
@@ -66,7 +82,7 @@ func (zb *zerologBuilder) SetLevel(level log.Level) log.Builder {
 	return zb
 }
 
-func (zb *zerologBuilder) AddStaticFields(fields map[string]interface{}) log.Builder {
+func (zb *zerologBuilder) AddStaticFields(fields map[string]interface{}) ZerologBuilder {
 	zb.ll.PushBack(func(cfg *zerologConfig) {
 		for k, v := range fields {
 			cfg.staticFields[k] = v
@@ -75,31 +91,30 @@ func (zb *zerologBuilder) AddStaticFields(fields map[string]interface{}) log.Bui
 	return zb
 }
 
-func (zb *zerologBuilder) AddContextExtractors(hooks ...log.ContextExtractor) log.Builder {
-	zb.ll.PushBack(func(cfg *zerologConfig) {
-		cfg.contextExtractors = append(cfg.contextExtractors, hooks...)
-	})
-	return zb
-}
-
-func (zb *zerologBuilder) ExcludeTime() log.Builder {
+func (zb *zerologBuilder) ExcludeTime() ZerologBuilder {
 	zb.ll.PushBack(func(cfg *zerologConfig) {
 		cfg.excludeTimeField = true
 	})
 	return zb
 }
 
-func (zb *zerologBuilder) SetCustomTimeFormatter(format string) log.Builder {
+func (zb *zerologBuilder) SetCustomTimeFormatter(format string) ZerologBuilder {
 	zb.ll.PushBack(func(cfg *zerologConfig) {
 		cfg.customTimeFormat = format
 	})
 	return zb
 }
 
-func (zb *zerologBuilder) IncludeCallerAndSkipFrames(skip int) log.Builder {
+func (zb *zerologBuilder) IncludeCaller() ZerologBuilder {
 	zb.ll.PushBack(func(cfg *zerologConfig) {
 		cfg.includeCaller = true
-		cfg.skipCallerFrames = zerolog.CallerSkipFrameCount + skipWrapperFrames + skip // bzerolog will add it's own amount of frames to skip and so do we
+	})
+	return zb
+}
+
+func (zb *zerologBuilder) IncrementSkipFrames(skip int) log.Builder {
+	zb.ll.PushBack(func(cfg *zerologConfig) {
+		cfg.skipCallerFrames += skip
 	})
 	return zb
 }
@@ -112,7 +127,7 @@ func (zb *zerologBuilder) Build() log.Logger {
 		contextExtractors: nil,
 		customTimeFormat:  time.RFC3339,
 		excludeTimeField:  false,
-		skipCallerFrames:  zerolog.CallerSkipFrameCount + skipWrapperFrames,
+		skipCallerFrames:  zerolog.CallerSkipFrameCount + skipWrapperFrames, // bzerolog will add it's own amount of frames to skip and so do we
 		includeCaller:     false,
 	}
 	// Purely sanity code that should not be ever...

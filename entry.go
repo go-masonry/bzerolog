@@ -2,7 +2,6 @@ package bzerolog
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/go-masonry/mortar/interfaces/log"
@@ -11,6 +10,7 @@ import (
 
 type zerologEntryWrapper struct {
 	err                 error
+	staticFields        map[string]interface{}
 	fields              map[string]interface{}
 	rootWrapper         *zerologWrapper
 	calledWithSomeField bool
@@ -19,12 +19,10 @@ type zerologEntryWrapper struct {
 func newEntry(root *zerologWrapper, calledWithSomeField bool, staticFields map[string]interface{}) *zerologEntryWrapper {
 	// copy map
 	fields := make(map[string]interface{})
-	for k, v := range staticFields {
-		fields[k] = v
-	}
 	return &zerologEntryWrapper{
 		err:                 nil,
 		fields:              fields,
+		staticFields:        staticFields,
 		rootWrapper:         root,
 		calledWithSomeField: calledWithSomeField,
 	}
@@ -48,15 +46,15 @@ func (zew *zerologEntryWrapper) Error(ctx context.Context, format string, args .
 func (zew *zerologEntryWrapper) Custom(ctx context.Context, level log.Level, format string, args ...interface{}) {
 	switch level {
 	case log.ErrorLevel:
-		zew.Error(ctx, format, args...)
+		zew.msg(ctx, zerolog.ErrorLevel, format, args...)
 	case log.WarnLevel:
-		zew.Warn(ctx, format, args...)
+		zew.msg(ctx, zerolog.WarnLevel, format, args...)
 	case log.InfoLevel:
-		zew.Info(ctx, format, args...)
+		zew.msg(ctx, zerolog.InfoLevel, format, args...)
 	case log.DebugLevel:
-		zew.Debug(ctx, format, args...)
+		zew.msg(ctx, zerolog.DebugLevel, format, args...)
 	default:
-		zew.Trace(ctx, format, args...)
+		zew.msg(ctx, zerolog.TraceLevel, format, args...)
 	}
 }
 
@@ -72,12 +70,14 @@ func (zew *zerologEntryWrapper) WithField(name string, value interface{}) log.Fi
 	return zew
 }
 
-func (zew *zerologEntryWrapper) msg(ctx context.Context, level zerolog.Level, format string, args ...interface{}) {
-	zew.extractFromContextIfNeeded(ctx)
+func (zew *zerologEntryWrapper) msg(_ context.Context, level zerolog.Level, format string, args ...interface{}) {
 	event := zew.rootWrapper.instance.WithLevel(level)
 	event = zew.addTimestampIfNeeded(event)
 	event = zew.includeCallerIfNeeded(event)
 	event = event.AnErr(zerolog.ErrorFieldName, zew.err)
+	if len(zew.staticFields) > 0 {
+		event = event.Fields(zew.staticFields)
+	}
 	if len(zew.fields) > 0 {
 		event = event.Fields(zew.fields)
 	}
@@ -107,23 +107,6 @@ func (zew *zerologEntryWrapper) addTimestampIfNeeded(e *zerolog.Event) *zerolog.
 		return e.Str(zerolog.TimestampFieldName, now.Format(zew.rootWrapper.cfg.customTimeFormat))
 	}
 	return e
-}
-
-func (zew *zerologEntryWrapper) extractFromContextIfNeeded(ctx context.Context) {
-	defer func() {
-		if r := recover(); r != nil {
-			zew.WithField("__panic__", fmt.Sprintf("one of the context extractors panicked: %v", r))
-		}
-	}()
-	if ctx != nil && len(zew.rootWrapper.cfg.contextExtractors) > 0 {
-		for _, extractor := range zew.rootWrapper.cfg.contextExtractors {
-			fields := extractor(ctx)
-			// merge maps
-			for name, value := range fields {
-				zew.WithField(name, value)
-			}
-		}
-	}
 }
 
 // Sanity

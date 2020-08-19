@@ -2,7 +2,6 @@ package bzerolog
 
 import (
 	"context"
-	"io"
 
 	"github.com/go-masonry/mortar/interfaces/log"
 	"github.com/rs/zerolog"
@@ -48,17 +47,18 @@ func (zw *zerologWrapper) Error(ctx context.Context, format string, args ...inte
 }
 
 func (zw *zerologWrapper) Custom(ctx context.Context, level log.Level, format string, args ...interface{}) {
+	// Everything here is called explicitly to avoid adding a layer for caller.
 	switch level {
 	case log.ErrorLevel:
-		zw.Error(ctx, format, args...)
+		newEntry(zw, false, zw.cfg.staticFields).Error(ctx, format, args...)
 	case log.WarnLevel:
-		zw.Warn(ctx, format, args...)
+		newEntry(zw, false, zw.cfg.staticFields).Warn(ctx, format, args...)
 	case log.InfoLevel:
-		zw.Info(ctx, format, args...)
+		newEntry(zw, false, zw.cfg.staticFields).Info(ctx, format, args...)
 	case log.DebugLevel:
-		zw.Debug(ctx, format, args...)
+		newEntry(zw, false, zw.cfg.staticFields).Debug(ctx, format, args...)
 	default:
-		zw.Trace(ctx, format, args...)
+		newEntry(zw, false, zw.cfg.staticFields).Trace(ctx, format, args...)
 	}
 }
 
@@ -78,20 +78,8 @@ func (zw *zerologWrapper) Configuration() log.LoggerConfiguration {
 }
 
 // Implement Configuration
-func (zw *zerologWrapper) Writer() io.Writer {
-	return zw.cfg.writer
-}
 func (zw *zerologWrapper) Level() log.Level {
 	return zw.cfg.level
-}
-func (zw *zerologWrapper) ContextExtractors() []log.ContextExtractor {
-	return zw.cfg.contextExtractors
-}
-func (zw *zerologWrapper) TimeFieldConfiguration() (bool, string) {
-	return zw.cfg.excludeTimeField, zw.cfg.customTimeFormat
-}
-func (zw *zerologWrapper) CallerConfiguration() (bool, int) {
-	return zw.cfg.includeCaller, zw.cfg.skipCallerFrames
 }
 
 func (zw *zerologWrapper) Implementation() interface{} {
