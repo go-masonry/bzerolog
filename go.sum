@@ -19,6 +19,8 @@ github.com/go-masonry/mortar v0.0.0-20200806092251-fea72c57d080 h1:wyeNKq9KOG9U4
 github.com/go-masonry/mortar v0.0.0-20200806092251-fea72c57d080/go.mod h1:yb9DYBXJMnsHzhqSV7HMcJqO8GqNeb5FqvxUf9f0giA=
 github.com/go-masonry/mortar v0.0.0-20200819084714-05e361792574 h1:VoPKE0UMEw2+voZVNFKIOLAQ8ieiiTkl41ZwgRRUPTw=
 github.com/go-masonry/mortar v0.0.0-20200819084714-05e361792574/go.mod h1:MyMIbRXS1dyd4uIMB5/0fucy4EgFRJbhSDClpCyz8sE=
+github.com/go-masonry/mortar v0.0.0-20200819093634-5b1a0703c4a4 h1:xtwwgcJHsFIA6G0DYFq0rcHOSRYyVFk3cI3sCbqzMes=
+github.com/go-masonry/mortar v0.0.0-20200819093634-5b1a0703c4a4/go.mod h1:MyMIbRXS1dyd4uIMB5/0fucy4EgFRJbhSDClpCyz8sE=
 github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b/go.mod h1:SBH7ygxi8pfUlaOkMMuAQtPIUF8ecWP5IEl/CR7VP2Q=
 github.com/golang/mock v1.1.1/go.mod h1:oTYuIxOrZwtPieC+H1uAHpcLFnEyAGVDL/k47Jfbm0A=
 github.com/golang/mock v1.4.4/go.mod h1:l3mdAwkq5BuhzHwde/uurv3sEJeZMXNpwsxVWU71h+4=
