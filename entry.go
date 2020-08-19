@@ -8,6 +8,8 @@ import (
 	"github.com/rs/zerolog"
 )
 
+const noAdditionalFramesSkip = 0
+
 type zerologEntryWrapper struct {
 	err                 error
 	staticFields        map[string]interface{}
@@ -29,32 +31,32 @@ func newEntry(root *zerologWrapper, calledWithSomeField bool, staticFields map[s
 }
 
 func (zew *zerologEntryWrapper) Trace(ctx context.Context, format string, args ...interface{}) {
-	zew.msg(ctx, zerolog.TraceLevel, format, args...)
+	zew.msg(ctx, zerolog.TraceLevel, noAdditionalFramesSkip, format, args...)
 }
 func (zew *zerologEntryWrapper) Debug(ctx context.Context, format string, args ...interface{}) {
-	zew.msg(ctx, zerolog.DebugLevel, format, args...)
+	zew.msg(ctx, zerolog.DebugLevel, noAdditionalFramesSkip, format, args...)
 }
 func (zew *zerologEntryWrapper) Info(ctx context.Context, format string, args ...interface{}) {
-	zew.msg(ctx, zerolog.InfoLevel, format, args...)
+	zew.msg(ctx, zerolog.InfoLevel, noAdditionalFramesSkip, format, args...)
 }
 func (zew *zerologEntryWrapper) Warn(ctx context.Context, format string, args ...interface{}) {
-	zew.msg(ctx, zerolog.WarnLevel, format, args...)
+	zew.msg(ctx, zerolog.WarnLevel, noAdditionalFramesSkip, format, args...)
 }
 func (zew *zerologEntryWrapper) Error(ctx context.Context, format string, args ...interface{}) {
-	zew.msg(ctx, zerolog.ErrorLevel, format, args...)
+	zew.msg(ctx, zerolog.ErrorLevel, noAdditionalFramesSkip, format, args...)
 }
-func (zew *zerologEntryWrapper) Custom(ctx context.Context, level log.Level, format string, args ...interface{}) {
+func (zew *zerologEntryWrapper) Custom(ctx context.Context, level log.Level, skipAdditionalFrames int, format string, args ...interface{}) {
 	switch level {
 	case log.ErrorLevel:
-		zew.msg(ctx, zerolog.ErrorLevel, format, args...)
+		zew.msg(ctx, zerolog.ErrorLevel, skipAdditionalFrames, format, args...)
 	case log.WarnLevel:
-		zew.msg(ctx, zerolog.WarnLevel, format, args...)
+		zew.msg(ctx, zerolog.WarnLevel, skipAdditionalFrames, format, args...)
 	case log.InfoLevel:
-		zew.msg(ctx, zerolog.InfoLevel, format, args...)
+		zew.msg(ctx, zerolog.InfoLevel, skipAdditionalFrames, format, args...)
 	case log.DebugLevel:
-		zew.msg(ctx, zerolog.DebugLevel, format, args...)
+		zew.msg(ctx, zerolog.DebugLevel, skipAdditionalFrames, format, args...)
 	default:
-		zew.msg(ctx, zerolog.TraceLevel, format, args...)
+		zew.msg(ctx, zerolog.TraceLevel, skipAdditionalFrames, format, args...)
 	}
 }
 
@@ -70,10 +72,10 @@ func (zew *zerologEntryWrapper) WithField(name string, value interface{}) log.Fi
 	return zew
 }
 
-func (zew *zerologEntryWrapper) msg(_ context.Context, level zerolog.Level, format string, args ...interface{}) {
+func (zew *zerologEntryWrapper) msg(_ context.Context, level zerolog.Level, skipAdditionalFrames int, format string, args ...interface{}) {
 	event := zew.rootWrapper.instance.WithLevel(level)
 	event = zew.addTimestampIfNeeded(event)
-	event = zew.includeCallerIfNeeded(event)
+	event = zew.includeCallerIfNeeded(event, skipAdditionalFrames)
 	event = event.AnErr(zerolog.ErrorFieldName, zew.err)
 	if len(zew.staticFields) > 0 {
 		event = event.Fields(zew.staticFields)
@@ -89,11 +91,11 @@ func (zew *zerologEntryWrapper) msg(_ context.Context, level zerolog.Level, form
 	}
 }
 
-func (zew *zerologEntryWrapper) includeCallerIfNeeded(e *zerolog.Event) *zerolog.Event {
+func (zew *zerologEntryWrapper) includeCallerIfNeeded(e *zerolog.Event, skipAdditionalFrames int) *zerolog.Event {
 	if zew.rootWrapper.cfg.includeCaller {
-		skip := zew.rootWrapper.cfg.skipCallerFrames
+		skip := zew.rootWrapper.cfg.skipCallerFrames + skipAdditionalFrames
 		if !zew.calledWithSomeField {
-			skip++ // This log was first called with Error/Field and then Debug/Trace/...
+			skip++ // This log was first called with Error/Field and then Debug/Trace/... it's because first call returns an interface
 		}
 		return e.Caller(skip)
 	}

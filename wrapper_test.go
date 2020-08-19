@@ -67,22 +67,22 @@ func TestCustomLevel(t *testing.T) {
 	for _, lvl := range levels {
 		buf := &bytes.Buffer{}
 		logger := Builder().SetWriter(buf).ExcludeTime().Build()
-		logger.Custom(nil, lvl, "%s message", lvl.String())
+		logger.Custom(nil, lvl, 0, "%s message", lvl.String())
 		expected := fmt.Sprintf(`{"message":"%s message", "level":"%s"}`, lvl, lvl)
 		assert.JSONEq(t, expected, buf.String())
 		// Without Arguments
 		buf.Reset()
-		logger.Custom(nil, lvl, "message")
+		logger.Custom(nil, lvl, 0, "message")
 		expected = fmt.Sprintf(`{"message":"message", "level":"%s"}`, lvl)
 		assert.JSONEq(t, expected, buf.String())
 		// With Field/Error no Arguments
 		buf.Reset()
-		logger.WithField("field", "value").Custom(nil, lvl, "message")
+		logger.WithField("field", "value").Custom(nil, lvl, 0, "message")
 		expected = fmt.Sprintf(`{"message":"message", "level":"%s", "field":"value"}`, lvl)
 		assert.JSONEq(t, expected, buf.String())
 		// With Field/Error with Arguments
 		buf.Reset()
-		logger.WithError(fmt.Errorf("bad one")).Custom(nil, lvl, "%s message", lvl)
+		logger.WithError(fmt.Errorf("bad one")).Custom(nil, lvl, 0, "%s message", lvl)
 		expected = fmt.Sprintf(`{"message":"%s message", "level":"%s", "error":"bad one"}`, lvl, lvl)
 		assert.JSONEq(t, expected, buf.String())
 	}
@@ -127,11 +127,11 @@ func TestCallerIncludedCustom(t *testing.T) {
 		WithField("one", 1).
 		WithError(fmt.Errorf("this is an error")).
 		WithField("two", 2).
-		Custom(nil, log.DebugLevel, "log with caller and fields")
+		Custom(nil, log.DebugLevel, 0, "log with caller and fields")
 	rx := `\"caller\"\:\".+\/go-masonry\/bzerolog\/wrapper_test\.go\:\d{1,5}` // we want to see this file as a caller
 	assert.Regexp(t, rx, buf.String())
 	buf.Reset()
-	logger.Custom(nil, log.DebugLevel, "log with caller no fields")
+	logger.Custom(nil, log.DebugLevel, 0, "log with caller no fields")
 	assert.Regexp(t, rx, buf.String())
 }
 

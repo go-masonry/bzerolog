@@ -46,20 +46,8 @@ func (zw *zerologWrapper) Error(ctx context.Context, format string, args ...inte
 	newEntry(zw, false, zw.cfg.staticFields).Error(ctx, format, args...)
 }
 
-func (zw *zerologWrapper) Custom(ctx context.Context, level log.Level, format string, args ...interface{}) {
-	// Everything here is called explicitly to avoid adding a layer for caller.
-	switch level {
-	case log.ErrorLevel:
-		newEntry(zw, false, zw.cfg.staticFields).Error(ctx, format, args...)
-	case log.WarnLevel:
-		newEntry(zw, false, zw.cfg.staticFields).Warn(ctx, format, args...)
-	case log.InfoLevel:
-		newEntry(zw, false, zw.cfg.staticFields).Info(ctx, format, args...)
-	case log.DebugLevel:
-		newEntry(zw, false, zw.cfg.staticFields).Debug(ctx, format, args...)
-	default:
-		newEntry(zw, false, zw.cfg.staticFields).Trace(ctx, format, args...)
-	}
+func (zw *zerologWrapper) Custom(ctx context.Context, level log.Level, skipAdditionalFrames int, format string, args ...interface{}) {
+	newEntry(zw, false, zw.cfg.staticFields).Custom(ctx, level, skipAdditionalFrames, format, args...)
 }
 
 // Add an error to the log structure, output depends on the implementation
