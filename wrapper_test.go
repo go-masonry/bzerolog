@@ -112,7 +112,7 @@ func TestCallerIncluded(t *testing.T) {
 		WithError(fmt.Errorf("this is an error")).
 		WithField("two", 2).
 		Debug(nil, "log with caller with fields")
-	rx := `\"caller\"\:\".+\/go-masonry\/bzerolog` // we want to see this file as a caller
+	rx := `caller":".+bzerolog` // we want to see this file as a caller
 	assert.Regexp(t, rx, buf.String())
 	buf.Reset()
 	logger.Debug(nil, "log with caller no fields")
@@ -128,7 +128,7 @@ func TestCallerIncludedCustom(t *testing.T) {
 		WithError(fmt.Errorf("this is an error")).
 		WithField("two", 2).
 		Custom(nil, log.DebugLevel, 0, "log with caller and fields")
-	rx := `\"caller\"\:\".+\/go-masonry\/bzerolog` // we want to see this file as a caller
+	rx := `caller":".+bzerolog` // we want to see this file as a caller
 	assert.Regexp(t, rx, buf.String())
 	buf.Reset()
 	logger.Custom(nil, log.DebugLevel, 0, "log with caller no fields")
