@@ -47,14 +47,13 @@ type ZerologBuilder interface {
 }
 
 type zerologConfig struct {
-	writer            io.Writer
-	level             log.Level
-	staticFields      map[string]interface{}
-	contextExtractors []log.ContextExtractor
-	excludeTimeField  bool
-	customTimeFormat  string
-	includeCaller     bool
-	skipCallerFrames  int
+	writer           io.Writer
+	level            log.Level
+	staticFields     map[string]interface{}
+	excludeTimeField bool
+	customTimeFormat string
+	includeCaller    bool
+	skipCallerFrames int
 }
 
 type zerologBuilder struct {
@@ -121,14 +120,13 @@ func (zb *zerologBuilder) IncrementSkipFrames(skip int) log.Builder {
 
 func (zb *zerologBuilder) Build() log.Logger {
 	config := &zerologConfig{
-		writer:            os.Stderr,
-		level:             log.TraceLevel,
-		staticFields:      make(map[string]interface{}),
-		contextExtractors: nil,
-		customTimeFormat:  time.RFC3339,
-		excludeTimeField:  false,
-		skipCallerFrames:  zerolog.CallerSkipFrameCount + skipWrapperFrames, // bzerolog will add it's own amount of frames to skip and so do we
-		includeCaller:     false,
+		writer:           os.Stderr,
+		level:            log.TraceLevel,
+		staticFields:     make(map[string]interface{}),
+		customTimeFormat: time.RFC3339,
+		excludeTimeField: false,
+		skipCallerFrames: zerolog.CallerSkipFrameCount + skipWrapperFrames, // bzerolog will add it's own amount of frames to skip and so do we
+		includeCaller:    false,
 	}
 	// Purely sanity code that should not be ever...
 	if zb == nil {
